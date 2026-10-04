@@ -24,7 +24,14 @@
       width: 100vw;
       z-index: 1;
     }
-    /* Dashboard Panel Responsif HP & Desktop */
+
+    /* TRIK: Menghilangkan background putih gambar kanvas Matplotlib */
+    .transparent-overlay {
+      mix-blend-mode: multiply;
+      filter: contrast(1.15) brightness(1.05);
+    }
+
+    /* Dashboard Panel Responsif untuk HP & Desktop */
     .dashboard-panel {
       position: absolute;
       top: 12px;
@@ -137,7 +144,7 @@
       Monitorizasaun GeoAI Random Forest & Sentinel-2 MSI iha Munisípiu Ermera (2025–2026).
     </div>
 
-    <!-- Ringkasan Statistik Berdasarkan Analisis Spasial -->
+    <!-- Ringkasan Statistik Spasial -->
     <div class="stat-card">
       <div class="stat-title">📊 Estatístika Desflorestasaun</div>
       <div class="stat-item">
@@ -167,13 +174,13 @@
       </div>
     </div>
 
-    <!-- Pengatur Transparansi Layer Peta -->
+    <!-- Slider Transparansi -->
     <div class="slider-box">
       <label for="opacityRange">Opasidade Peta Alert:</label>
-      <input type="range" id="opacityRange" min="0" max="1" step="0.05" value="0.85">
+      <input type="range" id="opacityRange" min="0" max="1" step="0.05" value="0.95">
     </div>
 
-    <!-- Tautan Berkas Langsung -->
+    <!-- Tombol Unduh & Akses File Asli -->
     <a href="outputs/Peta_Deforestasi_Ermera_2026.png" target="_blank" class="btn-action">
       🗺️ Buka Peta Rezolusaun Aas
     </a>
@@ -186,24 +193,24 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // Koordinat pusat fokus ke Ermera (~ -8.78, 125.38)
+    // Inisialisasi peta berfokus di Ermera
     var map = L.map('map', {
       zoomControl: true
     }).setView([-8.78, 125.38], 11);
 
-    // 1. Basemap Topografi ESRI (Gratis, detail, tanpa API Key)
+    // 1. Basemap ESRI Topo (Bebas blokir & tanpa API Key)
     var esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+      attribution: 'Tiles &copy; Esri &mdash; DeLorme, NAVTEQ'
     }).addTo(map);
 
-    // 2. Basemap Citra Satelit ESRI (World Imagery)
+    // 2. Basemap Citra Satelit ESRI World Imagery
     var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       attribution: 'Tiles &copy; Esri'
     });
 
-    // 3. Basemap OpenStreetMap Standard (OSM Prancis - stabil tanpa blokir)
+    // 3. Basemap Peta Jalan OSM Stabil
     var osmFr = L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap France'
@@ -215,34 +222,35 @@
       "Peta Dalan (OSM)": osmFr
     };
 
-    // Bounding Box Geografis Munisípiu Ermera sesuai grid koordinat peta
+    // Bounding Box Geografis Munisípiu Ermera sesuai koordinat kanvas
     var ermeraBounds = [
-      [-8.965, 125.185], // Sudut Kiri-Bawah (Selatan, Barat)
-      [-8.640, 125.525]  // Sudut Kanan-Atas (Utara, Timur)
+      [-8.965, 125.185], // Sudut Kiri-Bawah (South-West)
+      [-8.640, 125.525]  // Sudut Kanan-Atas (North-East)
     ];
 
-    // Overlay Peta Alert Deforestasi & Kebakaran ke atas peta interaktif
+    // Image overlay dengan kelas khusus transparent-overlay (mix-blend-mode: multiply)
     var alertOverlay = L.imageOverlay('outputs/Peta_Deforestasi_Ermera_2026.png', ermeraBounds, {
-      opacity: 0.85,
-      interactive: true
+      opacity: 0.95,
+      interactive: true,
+      className: 'transparent-overlay'
     }).addTo(map);
 
     var overlayMaps = {
-      "Peta Titik Alert & Batas Ermera": alertOverlay
+      "Peta Titik Alert Deforestasi": alertOverlay
     };
 
     L.control.layers(baseMaps, overlayMaps, { position: 'topleft' }).addTo(map);
 
-    // Zoom otomatis ke area batas Ermera
+    // Zoom otomatis pas ke batas Ermera
     map.fitBounds(ermeraBounds);
 
-    // Kontrol geser opasitas (transparansi)
+    // Listener interaktif pengatur opasitas
     var slider = document.getElementById('opacityRange');
     slider.addEventListener('input', function() {
       alertOverlay.setOpacity(this.value);
     });
 
-    // Marker informasi Gleno (Ibukota Ermera)
+    // Marker Ibukota Gleno
     L.circleMarker([-8.723, 125.436], {
       radius: 6,
       fillColor: "#0055ff",
