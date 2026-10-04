@@ -1,0 +1,20 @@
+name: NRT Deforestation Monitor Ermera
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Berjalan otomatis setiap hari pukul 02:00 UTC
+  workflow_dispatch:      # Tombol manual trigger di web GitHub
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run Detection
+        run: |
+          pip install earthengine-api geopandas psycopg2-binary
+          python run_nrt_detection.py

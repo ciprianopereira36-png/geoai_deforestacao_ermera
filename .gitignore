@@ -1,0 +1,10 @@
+# Virtual Environment
+venv/
+__pycache__/
+
+# Raster GeoTIFF ukuran besar
+raw/*.tif
+
+# Cache file
+*.lock
+.DS_Store
