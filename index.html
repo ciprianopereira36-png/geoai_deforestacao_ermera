@@ -25,7 +25,7 @@
       z-index: 1;
     }
 
-    /* Panel Dashboard Responsif */
+    /* Dashboard Panel */
     .dashboard-panel {
       position: absolute;
       top: 12px;
@@ -95,8 +95,9 @@
       width: 12px;
       height: 12px;
       border-radius: 50%;
-      background: #ff5722;
-      border: 1px solid #bf360c;
+      background: #ff3b00;
+      box-shadow: 0 0 4px rgba(255, 59, 0, 0.8);
+      border: 1px solid #fff;
     }
     .btn-action {
       display: block;
@@ -128,7 +129,6 @@
       Monitorizasaun GeoAI Random Forest & Sentinel-2 MSI iha Munisípiu Ermera (2025–2026).
     </div>
 
-    <!-- Ringkasan Statistik Spasial -->
     <div class="stat-card">
       <div class="stat-title">📊 Estatístika Desflorestasaun</div>
       <div class="stat-item">
@@ -145,7 +145,6 @@
       </div>
     </div>
 
-    <!-- Legenda -->
     <div class="legend-box">
       <strong>Legenda:</strong>
       <div class="legend-item">
@@ -154,7 +153,6 @@
       </div>
     </div>
 
-    <!-- Tombol Akses Data -->
     <a href="outputs/Peta_Deforestasi_Ermera_2026.png" target="_blank" class="btn-action">
       🗺️ Buka Peta Rezolusaun Aas
     </a>
@@ -166,19 +164,21 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- Memuat Titik Alert Secara Langsung (Bebas Masalah CORS file:///) -->
+  <script src="outputs/titik_alert.js"></script>
+
   <script>
-    // Inisialisasi peta berfokus di Ermera
     var map = L.map('map', {
       zoomControl: true
     }).setView([-8.75, 125.40], 11);
 
-    // 1. Basemap Citra Satelit ESRI World Imagery
+    // Basemap Citra Satelit ESRI
     var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: 'Tiles &copy; Esri &mdash; Earthstar Geographics'
+      attribution: 'Tiles &copy; Esri'
     }).addTo(map);
 
-    // 2. Basemap Topografi ESRI
+    // Basemap Topografi ESRI
     var esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
       attribution: 'Tiles &copy; Esri'
@@ -190,53 +190,32 @@
     };
     L.control.layers(baseMaps, null, { position: 'topleft' }).addTo(map);
 
-    // Marker Pusat Ermera (Gleno)
-    L.circleMarker([-8.723, 125.436], {
-      radius: 6,
-      fillColor: "#0078ff",
-      color: "#ffffff",
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.95
-    }).addTo(map)
-      .bindPopup("<b>Gleno</b><br>Sentru Administrativu Ermera.");
-
-    // Memuat data GeoJSON titik alert murni
-    fetch('outputs/titik_alert.geojson')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Berkas GeoJSON belum ditemukan');
+    // Render Titik-Titik Alert Langsung
+    if (typeof alertPointsData !== 'undefined') {
+      var alertLayer = L.geoJSON(alertPointsData, {
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, {
+            radius: 2.5,
+            fillColor: "#ff3b00",
+            color: "#ffaa00",
+            weight: 0.5,
+            opacity: 0.9,
+            fillOpacity: 0.85
+          });
+        },
+        onEachFeature: function (feature, layer) {
+          var id = feature.properties && feature.properties.id ? feature.properties.id : '-';
+          layer.bindPopup("<b>Alerta Desflorestasaun / Api</b><br>ID: " + id + "<br>Status: Alerta Ativu");
         }
-        return response.json();
-      })
-      .then(data => {
-        var alertLayer = L.geoJSON(data, {
-          pointToLayer: function (feature, latlng) {
-            return L.circleMarker(latlng, {
-              radius: 3,
-              fillColor: "#ff4500",
-              color: "#ffcc00",
-              weight: 0.5,
-              opacity: 0.9,
-              fillOpacity: 0.85
-            });
-          },
-          onEachFeature: function (feature, layer) {
-            var props = feature.properties || {};
-            var popupContent = `<b>Alerta Desflorestasaun / Api</b><br>ID: ${props.id || '-'}<br>Status: Risku Aas`;
-            layer.bindPopup(popupContent);
-          }
-        }).addTo(map);
+      }).addTo(map);
 
-        // Zoom otomatis agar mencakup seluruh titik alert
-        if (alertLayer.getLayers().length > 0) {
-          map.fitBounds(alertLayer.getBounds(), { padding: [20, 20] });
-          document.getElementById('totalAlert').innerText = alertLayer.getLayers().length.toLocaleString() + ' titik';
-        }
-      })
-      .catch(err => {
-        console.warn("GeoJSON tidak ditemukan atau dibuka via file://:", err);
-      });
+      // Otomatis fokus ke titik-titik Ermera
+      if (alertLayer.getLayers().length > 0) {
+        map.fitBounds(alertLayer.getBounds(), { padding: [25, 25] });
+      }
+    } else {
+      console.error("Data titik_alert.js tidak terbaca.");
+    }
   </script>
 </body>
 </html>
